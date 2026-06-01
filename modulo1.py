@@ -55,7 +55,7 @@ def register_screens(screen_number, rows_qty, sits_per_row, screen_type):
 
 setup_db()
 register_movies("O Batman", "Ação", 176, "14", "O herói de Gotham...")
-register_screens(6, 10, 12, 'IMAX')
+register_screens(6, 10, 60, 'IMAX')
 
 
 

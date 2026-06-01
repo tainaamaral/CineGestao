@@ -54,9 +54,6 @@ def register_screens(screen_number, rows_qty, sits_per_row, screen_type):
     print('Sala cadastrada com sucesso!!')
 
 setup_db()
-register_movies("O Batman", "Ação", 176, "14", "O herói de Gotham...")
-register_screens(6, 10, 60, 'IMAX')
-
 
 
 def list_movies():

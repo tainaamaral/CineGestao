@@ -55,6 +55,21 @@ def register_screens(screen_number, rows_qty, sits_per_row, screen_type):
 
 setup_db()
 
+def register_room():
+    print('\n \t --- CADASTRO DE NOVA SALA ----')
+    try:
+        screen_number = int(input('Digite o número da sala: '))
+        rows_qty = int(input('Digite a quantidade de fileiras: '))
+        sits_per_row = int(input('Digite a quantidade de assentos por fileira: '))
+        if screen_number <= 0 or rows_qty <= 0 or sits_per_row <= 0:
+            print('Erro! A quantidade deve ser maior que 0')
+            return
+    except ValueError:
+        print('Apenas números são aceitos!')
+        return
+    total_capacity = rows_qty * sits_per_row
+    screen_type = input('Digite o tipo de tela: ')
+    register_screens(screen_number, rows_qty, sits_per_row, total_capacity, screen_type)
 
 def list_movies():
     connection = sqlite3.connect('banco.db')

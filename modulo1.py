@@ -42,15 +42,16 @@ def register_movies(title, genre, duration, age_rating, synopsis):
 def register_screens(screen_number, rows_qty, sits_per_row, screen_type):
     connection = sqlite3.connect('banco.db')
     cursor = connection.cursor()
-
-    total_capacity = rows_qty * sits_per_row
-    cursor.execute(""" 
-    INSERT INTO screens (screen_number, rows_qty, sits_per_row, total_capacity, screen_type) 
-    VALUES (?, ?, ?, ?, ?)
-    """ , (screen_number, rows_qty, sits_per_row, total_capacity, screen_type))
-
-    connection.commit()
-    connection.close()
+    try:
+        cursor.execute(""" 
+        INSERT INTO screens (screen_number, rows_qty, sits_per_row, total_capacity, screen_type) 
+        VALUES (?, ?, ?, ?, ?)
+        """ , (screen_number, rows_qty, sits_per_row, total_capacity, screen_type))
+        connection.commit()
+    except sqlite3.IntegrityError:
+        print('Erro! O número desta sala ja está cadastrado')
+    finally:
+        connection.close()
     print('Sala cadastrada com sucesso!!')
 
 setup_db()

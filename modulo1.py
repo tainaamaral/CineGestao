@@ -55,6 +55,23 @@ def register_screens(screen_number, rows_qty, sits_per_row, screen_type):
 
 setup_db()
 
+def register_movie():
+    print('\n \t --- CADASTRO DE NOVO FILME ---')
+    title = input('Digite o titulo do filme: ')
+    genre = input('Digite o gênero do filme: ')
+    try:
+        duration = int(input('Digite a duração do filme em minutos: '))
+        if duration <= 0:
+            print('Erro! A duração deve ser maior que zero: ')
+            return
+    except ValueError:
+        print('Apenas números são aceitos!!')
+        return
+    age_rating = input('Digite a classificação indicativa: ')
+    synopsis = input('Digite a sinopse do filme: ')
+    register_movies(title, genre, duration, age_rating, synopsis)
+
+
 def register_room():
     print('\n \t --- CADASTRO DE NOVA SALA ----')
     try:

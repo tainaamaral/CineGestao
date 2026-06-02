@@ -42,22 +42,52 @@ def register_movies(title, genre, duration, age_rating, synopsis):
 def register_screens(screen_number, rows_qty, sits_per_row, screen_type):
     connection = sqlite3.connect('banco.db')
     cursor = connection.cursor()
-
-    total_capacity = rows_qty * sits_per_row
-    cursor.execute(""" 
-    INSERT INTO screens (screen_number, rows_qty, sits_per_row, total_capacity, screen_type) 
-    VALUES (?, ?, ?, ?, ?)
-    """ , (screen_number, rows_qty, sits_per_row, total_capacity, screen_type))
-
-    connection.commit()
-    connection.close()
+    try:
+        cursor.execute(""" 
+        INSERT INTO screens (screen_number, rows_qty, sits_per_row, total_capacity, screen_type) 
+        VALUES (?, ?, ?, ?, ?)
+        """ , (screen_number, rows_qty, sits_per_row, total_capacity, screen_type))
+        connection.commit()
+    except sqlite3.IntegrityError:
+        print('Erro! O número desta sala ja está cadastrado')
+    finally:
+        connection.close()
     print('Sala cadastrada com sucesso!!')
 
 setup_db()
-register_movies("O Batman", "Ação", 176, "14", "O herói de Gotham...")
-register_screens(6, 10, 60, 'IMAX')
+
+def register_movie():
+    print('\n \t --- CADASTRO DE NOVO FILME ---')
+    title = input('Digite o titulo do filme: ')
+    genre = input('Digite o gênero do filme: ')
+    try:
+        duration = int(input('Digite a duração do filme em minutos: '))
+        if duration <= 0:
+            print('Erro! A duração deve ser maior que zero: ')
+            return
+    except ValueError:
+        print('Apenas números são aceitos!!')
+        return
+    age_rating = input('Digite a classificação indicativa: ')
+    synopsis = input('Digite a sinopse do filme: ')
+    register_movies(title, genre, duration, age_rating, synopsis)
 
 
+def register_room():
+    print('\n \t --- CADASTRO DE NOVA SALA ----')
+    try:
+        screen_number = int(input('Digite o número da sala: '))
+        rows_qty = int(input('Digite a quantidade de fileiras: '))
+        sits_per_row = int(input('Digite a quantidade de assentos por fileira: '))
+        if screen_number <= 0 or rows_qty <= 0 or sits_per_row <= 0:
+            print('Erro! A quantidade deve ser maior que 0')
+            return
+    except ValueError:
+        print('Apenas números são aceitos!')
+        return
+    total_capacity = rows_qty * sits_per_row
+    screen_type = input('Digite o tipo de tela: ')
+    register_screens(screen_number, rows_qty, sits_per_row, total_capacity, screen_type)
 
 def list_movies():
     connection = sqlite3.connect('banco.db')

@@ -39,7 +39,7 @@ def register_movies(title, genre, duration, age_rating, synopsis):
     connection.close()
     print('Filme cadastrado com sucesso!!')
 
-def register_screens(screen_number, rows_qty, sits_per_row, screen_type):
+def register_screens(screen_number, rows_qty, sits_per_row, total_capacity, screen_type):
     connection = sqlite3.connect('banco.db')
     cursor = connection.cursor()
     try:
@@ -72,7 +72,6 @@ def register_movie():
     synopsis = input('Digite a sinopse do filme: ')
     register_movies(title, genre, duration, age_rating, synopsis)
 
-
 def register_room():
     print('\n \t --- CADASTRO DE NOVA SALA ----')
     try:
@@ -86,8 +85,11 @@ def register_room():
         print('Apenas números são aceitos!')
         return
     total_capacity = rows_qty * sits_per_row
-    screen_type = input('Digite o tipo de tela: ')
+    screen_type = input('Digite o tipo de tela: ').upper()
     register_screens(screen_number, rows_qty, sits_per_row, total_capacity, screen_type)
+
+register_movie()
+register_room()
 
 def list_movies():
     connection = sqlite3.connect('banco.db')
@@ -116,6 +118,5 @@ def list_screens():
 
 list_movies()
 list_screens()
-
 
 

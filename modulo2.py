@@ -20,6 +20,20 @@ def setup_db_modulo2():
     connection.commit()
     connection.close()
 
+def criar_tabela_ingressos():
+    connection = sqlite3.connect('banco.db')
+    cursor = connection.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            seat_code TEXT NOT NULL,
+            FOREIGN KEY (session_id) REFERENCES sessions (id_session)
+        )
+    """)
+    connection.commit()
+    connection.close()
+    
 def list_movies_summary():
     """Versão simplificada de listagem para o administrador escolher o filme"""
     connection = sqlite3.connect('banco.db')

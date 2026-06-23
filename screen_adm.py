@@ -224,6 +224,18 @@ def abrir_dashboard():
     ctk.CTkLabel(lista_salas, text="Salas Cadastradas", font=("Helvetica", 20, "bold"), text_color="#FFFFFF").pack(
         anchor="w", padx=15, pady=(10, 15))
 
+    def excluir_sala(num_sala):
+        try:
+            conexao = sqlite3.connect('banco.db')
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM screens WHERE screen_number = ?", (num_sala,))
+            conexao.commit()
+            conexao.close()
+            atualizar_lista_salas()
+            carregar_dados_reais_nas_sessoes()  # Atualiza o dropdown de sessões
+        except Exception as e:
+            print("Erro ao excluir sala:", e)
+
     def atualizar_lista_salas():
         for widget in lista_salas.winfo_children():
             if isinstance(widget, ctk.CTkFrame):

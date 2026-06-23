@@ -415,6 +415,85 @@ def abrir_dashboard():
                              text_color="#869B7E").pack(anchor="w", padx=15, pady=(0, 8))
         except Exception as e:
             print("Aviso na lista de sessões:", e)
+# ==========================================
+    # TELA 4: CLIENTES (FIDELIDADE)
+    # ==========================================
+    frame_clientes = ctk.CTkFrame(conteudo_frame, fg_color="transparent")
+
+    form_clientes = ctk.CTkFrame(frame_clientes, width=350, fg_color="#242424", corner_radius=15)
+    form_clientes.pack(side="left", fill="y", padx=(0, 20))
+    form_clientes.pack_propagate(False)
+
+    ctk.CTkLabel(form_clientes, text="Cadastrar Cliente", font=("Helvetica", 20, "bold"), text_color="#FFFFFF").pack(pady=(25, 20))
+
+    entrada_nome_cliente = ctk.CTkEntry(form_clientes, placeholder_text="Nome Completo", width=300, height=40, fg_color="#EEEBDD", text_color="#000000")
+    entrada_nome_cliente.pack(pady=10)
+
+    entrada_cpf_cliente = ctk.CTkEntry(form_clientes, placeholder_text="CPF (Apenas números)", width=300, height=40, fg_color="#EEEBDD", text_color="#000000")
+    entrada_cpf_cliente.pack(pady=10)
+
+    def comando_salvar_cliente():
+        nome = entrada_nome_cliente.get()
+        cpf = entrada_cpf_cliente.get()
+        if nome and cpf:
+            # Chama a função do modulo3 que criamos antes
+            sucesso, mensagem = modulo3.cadastrar_cliente(nome, cpf)
+            print(mensagem)
+            if sucesso:
+                entrada_nome_cliente.delete(0, 'end')
+                entrada_cpf_cliente.delete(0, 'end')
+                atualizar_lista_clientes()
+        else:
+            print("Preencha todos os campos!")
+
+    ctk.CTkButton(form_clientes, text="SALVAR CLIENTE", font=("Helvetica", 16, "bold"), fg_color="#810000", hover_color="#630000", width=300, height=50, corner_radius=10, command=comando_salvar_cliente).pack(side="bottom", pady=30)
+
+    # Lado Direito: Catálogo de Clientes com Scroll
+    lista_clientes = ctk.CTkScrollableFrame(frame_clientes, fg_color="#242424", corner_radius=15)
+    lista_clientes.pack(side="right", fill="both", expand=True)
+    ctk.CTkLabel(lista_clientes, text="Clientes Fidelidade", font=("Helvetica", 20, "bold"), text_color="#FFFFFF").pack(anchor="w", padx=15, pady=(10, 15))
+
+    def excluir_cliente(cpf_cliente):
+        try:
+            conexao = sqlite3.connect('banco.db')
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM clientes WHERE cpf = ?", (cpf_cliente,))
+            conexao.commit()
+            conexao.close()
+            atualizar_lista_clientes()
+        except Exception as e:
+            print("Erro ao excluir cliente:", e)
+
+    def atualizar_lista_clientes():
+        for widget in lista_clientes.winfo_children():
+            if isinstance(widget, ctk.CTkFrame):
+                widget.destroy()
+        try:
+            conexao = sqlite3.connect('banco.db')
+            cursor = conexao.cursor()
+            cursor.execute("SELECT nome, cpf FROM clientes")
+            clientes = cursor.fetchall()
+            conexao.close()
+
+            for cliente in clientes:
+                nome = cliente[0]
+                cpf = cliente[1]
+
+                card = ctk.CTkFrame(lista_clientes, fg_color="#333333", corner_radius=8)
+                card.pack(fill="x", padx=15, pady=5)
+
+                info_card = ctk.CTkFrame(card, fg_color="transparent")
+                info_card.pack(fill="x", padx=10, pady=8)
+
+                ctk.CTkLabel(info_card, text=f"{nome.upper()}", font=("Helvetica", 14, "bold"), text_color="#FFFFFF").pack(side="left")
+
+                btn_del = ctk.CTkButton(info_card, text="🗑️", width=35, height=30, fg_color="#5C1010", hover_color="#3D0B0B", command=lambda c=cpf: excluir_cliente(c))
+                btn_del.pack(side="right")
+
+                ctk.CTkLabel(card, text=f"CPF: {cpf}", font=("Helvetica", 12), text_color="#A0A0A0").pack(anchor="w", padx=20, pady=(0, 8))
+        except Exception as e:
+            print("Aviso na lista de clientes:", e)
+
 
     # INICIALIZAÇÃO
     selecionar_aba("filmes")

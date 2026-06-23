@@ -269,6 +269,110 @@ def abrir_atendimento():
 
 
     # ──────────────────────────────────────────────
+    # WIDGETS DO PAINEL ESQUERDO
+    # ──────────────────────────────────────────────
+    combo_filme = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
+                                  dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
+                                  values=["Selecione o Filme"], command=atualizar_combo_sessoes)
+    combo_filme.pack(pady=(0, 20))
+
+    combo_sessao = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
+                                   dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
+                                   values=["Selecione a Sessão"], command=alternar_sessao_e_construir_mapa)
+    combo_sessao.pack(pady=(0, 20))
+
+    combo_ingresso = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
+                                     dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
+                                     values=["Inteira", "Meia-Entrada (Estudante)"], command=atualizar_resumo_venda)
+    combo_ingresso.pack(pady=(0, 20))
+
+    # --- SEÇÃO DE BUSCA DE FIDELIDADE ---
+    frame_busca = ctk.CTkFrame(left_panel, fg_color="transparent")
+    frame_busca.pack(pady=(0, 10), padx=25, fill="x")
+
+    entry_fidelidade = ctk.CTkEntry(frame_busca, placeholder_text="CPF ou Nome", height=38, fg_color="#EEEBDD",
+                                    text_color="#000000")
+    entry_fidelidade.pack(side="left", fill="x", expand=True, padx=(0, 5))
+
+    def acao_buscar_cliente():
+        termo = entry_fidelidade.get().strip()
+        if not termo:
+            return
+
+        try:
+            conexao = sqlite3.connect('banco.db')
+            cursor = conexao.cursor()
+            # Busca pelo CPF exato ou se o nome contém o termo digitado
+            cursor.execute("SELECT nome FROM clientes WHERE cpf = ? OR nome LIKE ?", (termo, f"%{termo}%"))
+            cliente = cursor.fetchone()
+            conexao.close()
+
+            if cliente:
+                estado_venda["fidelidade_ativa"] = True
+                estado_venda["nome_cliente"] = cliente[0]
+                label_status_fidelidade.configure(text=f"✅ Fidelidade: {cliente[0]}\n(-R$ 5,00 por ingresso)",
+                                                  text_color="#4CAF50")
+            else:
+                estado_venda["fidelidade_ativa"] = False
+                estado_venda["nome_cliente"] = ""
+                label_status_fidelidade.configure(text="⚠ Cliente não encontrado", text_color="#FF4C4C")
+
+            atualizar_resumo_venda()  # Recalcula o valor total imediatamente
+        except Exception as e:
+            print("Erro ao buscar fidelidade:", e)
+
+    btn_buscar = ctk.CTkButton(frame_busca, text="🔍", width=40, height=38, fg_color="#242424", border_width=2,
+                               border_color="#D5D1C3", hover_color="#333333", command=acao_buscar_cliente)
+    btn_buscar.pack(side="right")
+
+    label_status_fidelidade = ctk.CTkLabel(left_panel, text="", font=("Helvetica", 12), text_color="#AAAAAA")
+    label_status_fidelidade.pack(pady=(0, 20))
+    # ------------------------------------
+
+    label_assento = ctk.CTkLabel(left_panel, text="Assento Selecionado: --", font=("Helvetica", 16),
+                                 text_color="#FFFFFF")
+    label_assento.pack(anchor="w", padx=25, pady=5)
+
+    label_total = ctk.CTkLabel(left_panel, text="Total a Pagar: R$ 0,00", font=("Helvetica", 20, "bold"),
+                               text_color="#FFFFFF")
+    label_total.pack(anchor="w", padx=25, pady=(5, 40))
+
+    # ──────────────────────────────────────────────
+    # PAINEL DIREITO
+    # ──────────────────────────────────────────────
+    right_panel = ctk.CTkFrame(app, fg_color="transparent")
+    right_panel.pack(side="right", fill="both", expand=True)
+
+    tela_cinema = ctk.CTkLabel(right_panel, text="TELA", font=("Helvetica", 16, "bold"), fg_color="#D5D1C3",
+                               text_color="#000000", width=600, height=30, corner_radius=10)
+    tela_cinema.pack(pady=(40, 20))
+
+    matriz_frame = ctk.CTkFrame(right_panel, fg_color="transparent")
+    matriz_frame.pack(anchor="n", pady=(10, 0))
+
+    def clicar_poltrona(fileira, assento, botao):
+        num_poltrona = (fileira * 8) + assento + 1
+        nome_assento = str(num_poltrona)
+
+        if botao.cget("fg_color") == "#810000":
+            return
+
+        if botao.cget("fg_color") == "#869B7E":
+            botao.configure(fg_color="#EEEBDD", text_color="#1B1717", hover_color="#1B1717")
+            if nome_assento in assentos_selecionados:
+                assentos_selecionados.remove(nome_assento)
+        else:
+            botao.configure(fg_color="#869B7E", text_color="#1B1717", hover_color="#6B7C64")
+            assentos_selecionados.append(nome_assento)
+
+        if assentos_selecionados:
+            assentos_ordenados = sorted(assentos_selecionados, key=int)
+            label_assento.configure(text=f"Poltronas: {', '.join(assentos_ordenados)}")
+        else:
+            label_assento.configure(text="Assento Selecionado: --")
+
+        atualizar_resumo_venda()
+
     def abrir_modal_bilhete(assentos_emitidos):
         modal = ctk.CTkToplevel(app)
         modal.geometry("460x660")  

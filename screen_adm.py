@@ -238,10 +238,20 @@ def abrir_dashboard():
             for sala in salas:
                 card = ctk.CTkFrame(lista_salas, fg_color="#333333", corner_radius=8)
                 card.pack(fill="x", padx=15, pady=5)
-                ctk.CTkLabel(card, text=f"Sala {sala[0]} - {sala[1].upper()}", font=("Helvetica", 14, "bold"),
-                             text_color="#FFFFFF").pack(anchor="w", padx=15, pady=(8, 0))
-                ctk.CTkLabel(card, text=f"Capacidade: {sala[2]} lugares", font=("Helvetica", 12),
-                             text_color="#A0A0A0").pack(anchor="w", padx=15, pady=(0, 8))
+
+                info_card = ctk.CTkFrame(card, fg_color="transparent")
+                info_card.pack(fill="x", padx=10, pady=8)
+
+                ctk.CTkLabel(info_card, text=f"Sala {num_sala} - {tipo.upper()}", font=("Helvetica", 14, "bold"),
+                             text_color="#FFFFFF").pack(side="left")
+
+                # Botão de excluir
+                btn_del = ctk.CTkButton(info_card, text="🗑️", width=35, height=30, fg_color="#5C1010",
+                                        hover_color="#3D0B0B", command=lambda n_s=num_sala: excluir_sala(n_s))
+                btn_del.pack(side="right")
+
+                ctk.CTkLabel(card, text=f"Capacidade: {capacidade} lugares", font=("Helvetica", 12),
+                             text_color="#A0A0A0").pack(anchor="w", padx=20, pady=(0, 8))
         except Exception as e:
             print("Aviso na lista de salas:", e)
 

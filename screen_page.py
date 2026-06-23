@@ -1,11 +1,63 @@
 import customtkinter as ctk
 import sqlite3
+import resend
+import os
+from dotenv import load_dotenv
 
-# Variáveis globais de controle da venda
+load_dotenv()
+
 id_sessao_atual = None
 assentos_selecionados = []
 
 
+#envio de email via resend 
+
+def enviar_ticket_por_email(destinatario, texto_filme, texto_sessao, tipo_ingresso, texto_assentos, texto_total):
+    resend.api_key = os.getenv("RESEND_API_KEY")
+
+    if not resend.api_key:
+        raise ValueError("RESEND_API_KEY não encontrada no arquivo .env")
+
+    corpo_html = f"""
+    <html>
+    <body style="font-family: 'Courier New', monospace; background:#f0ede4; padding:30px;">
+      <div style="max-width:440px; margin:auto; background:#FFFDF0; border:2px solid #D5D1C3;
+                  border-radius:12px; padding:30px;">
+
+        <h2 style="text-align:center; color:#1B1717; margin-bottom:4px;">⭐ CINEGESTÃO BILHETEIRA ⭐</h2>
+        <p style="text-align:center; color:#7F7F7F; margin-top:0;">───────────────────────────</p>
+
+        <p style="color:#333;"><b>CÓDIGO VENDAS:</b> #CNK-2026</p>
+        <p style="color:#000; font-size:15px;"><b>FILME:</b> {texto_filme.upper()}</p>
+        <p style="color:#1B1717;"><b>SESSÃO:</b> {texto_sessao}</p>
+        <p style="color:#1B1717;"><b>TIPO:</b> {tipo_ingresso.upper()}</p>
+        <p style="color:#810000; font-size:15px;"><b>ASSENTO(S):</b> Poltrona(s) {texto_assentos}</p>
+
+        <p style="text-align:center; color:#7F7F7F;">───────────────────────────</p>
+        <h3 style="text-align:center; color:#000;">VALOR TOTAL: {texto_total}</h3>
+
+        <p style="text-align:center; font-size:22px; letter-spacing:3px; color:#000;">
+          ||||| | |||| ||| || |||| | |||||
+        </p>
+        <p style="text-align:center; color:#555555; font-style:italic;">
+          MUITO OBRIGADO - BOM FILME!
+        </p>
+      </div>
+    </body>
+    </html>
+    """
+
+    resend.Emails.send({
+        "from": 'onboarding@resend.dev',
+        "to": destinatario,
+        "subject": f"🎬 Seu ingresso - {texto_filme}",
+        "html": corpo_html
+    })
+
+
+# ──────────────────────────────────────────────
+# TELA PRINCIPAL
+# ──────────────────────────────────────────────
 def abrir_atendimento():
     ctk.set_appearance_mode("dark")
 
@@ -14,7 +66,7 @@ def abrir_atendimento():
     app.title("CineGestão - Frente de Caixa")
     app.configure(fg_color="#1A1A1A")
 
-    # BASE DE DADOS: Garante de forma independente que a tabela de ingressos exista
+    # BASE DE DADOS
     def garantir_tabela_ingressos():
         try:
             conexao = sqlite3.connect('banco.db')
@@ -32,13 +84,12 @@ def abrir_atendimento():
         except Exception as e:
             print(f"Aviso na inicialização do banco: {e}")
 
-    # TOPO DA TELA (Barra Superior com Botão Voltar integrado)
     top_frame = ctk.CTkFrame(app, height=60, fg_color="#000000", corner_radius=0)
     top_frame.pack(side="top", fill="x")
 
     def voltar_para_inicio():
-        app.destroy()  # Fecha a tela de atendimento
-        import main  # Recarrega o menu inicial do projeto
+        app.destroy()
+        import main
         main.iniciar_sistema()
 
     btn_voltar = ctk.CTkButton(top_frame, text="⬅ Voltar", width=90, height=35, fg_color="#242424",
@@ -49,7 +100,7 @@ def abrir_atendimento():
                                text_color="#FFFFFF")
     titulo_topo.pack(pady=15, expand=True)
 
-    # PAINEL ESQUERDO (Ações do Operador de Caixa)
+
     left_panel = ctk.CTkFrame(app, width=350, fg_color="#242424", corner_radius=0)
     left_panel.pack(side="left", fill="y")
     left_panel.pack_propagate(False)
@@ -58,7 +109,6 @@ def abrir_atendimento():
                                 text_color="#FFFFFF")
     label_opcoes.pack(pady=(30, 20))
 
-    # BANCO DE DADOS: Carregar Filmes no Início
     def carregar_filmes_no_combo():
         try:
             conexao = sqlite3.connect('banco.db')
@@ -75,7 +125,6 @@ def abrir_atendimento():
         except sqlite3.OperationalError:
             combo_filme.configure(values=["Banco de dados vazio"])
 
-    # BANCO DE DADOS: Filtrar Sessões do Filme Escolhido
     def atualizar_combo_sessoes(escolha):
         filme_selecionado = combo_filme.get()
         if filme_selecionado in ["Selecione o Filme", "Nenhum filme cadastrado", "Banco de dados vazio"]:
@@ -111,7 +160,6 @@ def abrir_atendimento():
             combo_sessao.configure(values=["Erro ao ler sessões"])
             alternar_sessao_e_construir_mapa()
 
-    # BANCO DE DADOS: Gerar Mapa Reativo com Letras (A-J) e Números (1-80)
     def alternar_sessao_e_construir_mapa(escolha=None):
         global id_sessao_atual
         sessao_selecionada = combo_sessao.get()
@@ -219,10 +267,11 @@ def abrir_atendimento():
         except Exception:
             label_total.configure(text="Total a Pagar: R$ 0,00", text_color="#FFFFFF")
 
-    # SIMULAÇÃO DO CARTÃO IMPRESSO (Recebe os assentos fixos salvos)
+
+    # ──────────────────────────────────────────────
     def abrir_modal_bilhete(assentos_emitidos):
         modal = ctk.CTkToplevel(app)
-        modal.geometry("460x580")
+        modal.geometry("460x660")  
         modal.title("Emissão de Bilhete")
         modal.configure(fg_color="#222222")
         modal.resizable(False, False)
@@ -240,9 +289,10 @@ def abrir_atendimento():
         texto_assentos = ", ".join(assentos_ordenados)
         texto_total = label_total.cget("text").replace("Total a Pagar: ", "")
 
+        # CARTÃO DO INGRESSO
         cartao_ingresso = ctk.CTkFrame(modal, fg_color="#FFFDF0", corner_radius=12, border_width=2,
                                        border_color="#D5D1C3")
-        cartao_ingresso.pack(pady=25, padx=25, fill="both", expand=True)
+        cartao_ingresso.pack(pady=20, padx=25, fill="both", expand=True)
 
         ctk.CTkLabel(cartao_ingresso, text="⭐ CINEGESTÃO BILHETEIRA ⭐", font=("Courier New", 16, "bold"),
                      text_color="#1B1717").pack(pady=(20, 5))
@@ -256,8 +306,8 @@ def abrir_atendimento():
                      text_color="#333333").pack(anchor="w", pady=4)
         ctk.CTkLabel(corpo_info, text=f"FILME:   {texto_filme.upper()}", font=("Courier New", 14, "bold"),
                      text_color="#000000").pack(anchor="w", pady=6)
-        ctk.CTkLabel(corpo_info, text=f"SESSÃO:  {texto_sessao}", font=("Courier New", 13), text_color="#1B1717").pack(
-            anchor="w", pady=4)
+        ctk.CTkLabel(corpo_info, text=f"SESSÃO:  {texto_sessao}", font=("Courier New", 13),
+                     text_color="#1B1717").pack(anchor="w", pady=4)
         ctk.CTkLabel(corpo_info, text=f"TIPO:    {combo_ingresso.get().upper()}", font=("Courier New", 13),
                      text_color="#1B1717").pack(anchor="w", pady=4)
         ctk.CTkLabel(corpo_info, text=f"ASSENTO: Poltrona(s) {texto_assentos}", font=("Courier New", 13, "bold"),
@@ -267,21 +317,77 @@ def abrir_atendimento():
                      text_color="#7F7F7F").pack()
         ctk.CTkLabel(cartao_ingresso, text=f"VALOR TOTAL:  {texto_total}", font=("Courier New", 16, "bold"),
                      text_color="#000000").pack(pady=10)
-
         ctk.CTkLabel(cartao_ingresso, text="||||| | |||| ||| || |||| | |||||", font=("Courier New", 18, "bold"),
                      text_color="#000000").pack(pady=(5, 0))
         ctk.CTkLabel(cartao_ingresso, text="MUITO OBRIGADO - BOM FILME!", font=("Courier New", 11, "italic"),
                      text_color="#555555").pack(pady=(0, 15))
 
+        # ── CAMPO DE EMAIL ──
+        frame_email = ctk.CTkFrame(modal, fg_color="transparent")
+        frame_email.pack(pady=(0, 8), padx=25, fill="x")
+
+        entry_email = ctk.CTkEntry(
+            frame_email,
+            placeholder_text="Email do cliente (opcional)",
+            width=270, height=38,
+            font=("Helvetica", 13),
+            fg_color="#2E2E2E",
+            text_color="#FFFFFF",
+            border_color="#555555"
+        )
+        entry_email.pack(side="left", padx=(0, 8))
+
+        label_status_email = ctk.CTkLabel(modal, text="", font=("Helvetica", 12), text_color="#AAAAAA")
+        label_status_email.pack()
+
+        def acao_enviar_email():
+            email_digitado = entry_email.get().strip()
+
+            if "@" not in email_digitado or "." not in email_digitado:
+                label_status_email.configure(text="⚠ Email inválido.", text_color="#FF5555")
+                return
+
+            btn_email.configure(text="Enviando...", state="disabled", fg_color="#444444")
+            label_status_email.configure(text="Conectando ao servidor SMTP...", text_color="#AAAAAA")
+            modal.update()
+
+            try:
+                enviar_ticket_por_email(
+                    email_digitado,
+                    texto_filme,
+                    texto_sessao,
+                    combo_ingresso.get(),
+                    texto_assentos,
+                    texto_total
+                )
+                btn_email.configure(text="✅ Enviado!", fg_color="#2E5C2E", state="disabled")
+                label_status_email.configure(text=f"Comprovante enviado para {email_digitado}", text_color="#55CC55")
+            except Exception as e:
+                btn_email.configure(text="📧 Enviar", fg_color="#1A3A5C", state="normal")
+                label_status_email.configure(text=f"Erro ao enviar: {e}", text_color="#FF5555")
+                print(f"Erro SMTP: {e}")
+
+        btn_email = ctk.CTkButton(
+            frame_email,
+            text="📧 Enviar",
+            width=100, height=38,
+            fg_color="#1A3A5C",
+            hover_color="#122840",
+            font=("Helvetica", 13, "bold"),
+            command=acao_enviar_email
+        )
+        btn_email.pack(side="left")
+
+  
         def acao_fechar_modal():
             modal.destroy()
             alternar_sessao_e_construir_mapa()
 
         btn_fechar = ctk.CTkButton(modal, text="Concluir Impressão", width=200, height=45, fg_color="#5C1010",
                                    hover_color="#3D0B0B", font=("Helvetica", 14, "bold"), command=acao_fechar_modal)
-        btn_fechar.pack(pady=(0, 20))
+        btn_fechar.pack(pady=(8, 18))
 
-    # COMPONENTES DE INTERAÇÃO
+  
     combo_filme = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
                                   dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
                                   values=["Selecione o Filme"], command=atualizar_combo_sessoes)
@@ -305,7 +411,7 @@ def abrir_atendimento():
                                text_color="#FFFFFF")
     label_total.pack(anchor="w", padx=25, pady=(5, 40))
 
-    # PAINEL DIREITO (Layout da Sala)
+    # PAINEL DIREITO
     right_panel = ctk.CTkFrame(app, fg_color="transparent")
     right_panel.pack(side="right", fill="both", expand=True)
 
@@ -339,13 +445,11 @@ def abrir_atendimento():
 
         atualizar_resumo_venda()
 
-    # TRAVA CONTRA DUPLICIDADE: Copia e limpa imediatamente no início da execução
     def finalizar_venda_db():
         if not assentos_selecionados:
             label_total.configure(text="Selecione os assentos!", text_color="#FF3333")
             return
 
-        # Isola e limpa os assentos globais na mesma hora!
         assentos_para_este_bilhete = assentos_selecionados.copy()
         assentos_selecionados.clear()
 
@@ -365,11 +469,9 @@ def abrir_atendimento():
                 label_total.configure(text="Erro ao salvar no Banco!", text_color="#FF3333")
                 print(f"Erro crítico no SQLite: {e}")
                 return
-
         else:
             print("Aviso: Gerando bilhete simulado (modo homologação).")
 
-        # Abre o bilhete passando a cópia segura e única
         abrir_modal_bilhete(assentos_para_este_bilhete)
 
     btn_finalizar = ctk.CTkButton(left_panel, text="FINALIZAR VENDA", width=300, height=60, corner_radius=15,
@@ -377,7 +479,6 @@ def abrir_atendimento():
                                   text_color="#FFFFFF", command=finalizar_venda_db)
     btn_finalizar.pack(side="bottom", pady=40)
 
-    # Inicialização automática controlada
     garantir_tabela_ingressos()
     carregar_filmes_no_combo()
     alternar_sessao_e_construir_mapa()

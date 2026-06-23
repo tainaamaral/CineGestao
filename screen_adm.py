@@ -345,6 +345,34 @@ def abrir_dashboard():
             conexao.close()
 
             for sessao in sessoes:
+                id_sessao = sessao[0]
+                horario = sessao[1]
+                sala = sessao[2]
+                titulo = sessao[3]
+                preco = sessao[4]
+
+                card = ctk.CTkFrame(lista_sessoes, fg_color="#333333", corner_radius=8)
+                card.pack(fill="x", padx=15, pady=5)
+
+                # Criamos um container interno para deixar o texto na esquerda e o botão na direita
+                info_card = ctk.CTkFrame(card, fg_color="transparent")
+                info_card.pack(fill="x", padx=10, pady=8)
+
+                texto = f"{horario} | Sala {sala} - {titulo.upper()}"
+                ctk.CTkLabel(info_card, text=texto, font=("Helvetica", 14, "bold"), text_color="#FFFFFF").pack(
+                    side="left")
+
+                # Botão de excluir com o ícone de lixeira e a cor vermelha de alerta
+                btn_del = ctk.CTkButton(info_card, text="🗑️", width=35, height=30, fg_color="#5C1010",
+                                        hover_color="#3D0B0B", command=lambda id_s=id_sessao: excluir_sessao(id_s))
+                btn_del.pack(side="right")
+
+                ctk.CTkLabel(card, text=f"Preço Base: R$ {preco:.2f}", font=("Helvetica", 12),
+                             text_color="#869B7E").pack(anchor="w", padx=20, pady=(0, 8))
+        except Exception as e:
+            print("Aviso na lista de sessões:", e)
+
+            for sessao in sessoes:
                 card = ctk.CTkFrame(lista_sessoes, fg_color="#333333", corner_radius=8)
                 card.pack(fill="x", padx=15, pady=5)
                 ctk.CTkLabel(card, text=f"{sessao[0]} | Sala {sessao[1]} - {sessao[2].upper()}",

@@ -73,9 +73,10 @@ def abrir_dashboard():
                                 height=45, hover_color="#242424", command=lambda: selecionar_aba("sessoes"))
     btn_sessoes.pack(fill="x", padx=15, pady=5)
 
-    btn_voltar_menu = ctk.CTkButton(sidebar, text="⬅ Voltar ao Menu", font=("Helvetica", 15, "bold"),
-                                    fg_color="#242424", hover_color="#333333", height=45, command=voltar_para_inicio)
-    btn_voltar_menu.pack(side="bottom", fill="x", padx=15, pady=25)
+    # Novo botão de clientes na barra lateral
+    btn_clientes = ctk.CTkButton(sidebar, text="👥 Clientes", font=("Helvetica", 16), text_color="#A0A0A0", anchor="w",
+                                 height=45, hover_color="#242424", command=lambda: selecionar_aba("clientes"))
+    btn_clientes.pack(fill="x", padx=15, pady=5)
 
     # ÁREA CENTRAL
     conteudo_frame = ctk.CTkFrame(app, fg_color="transparent")

@@ -162,10 +162,20 @@ def abrir_dashboard():
             for filme in filmes:
                 card = ctk.CTkFrame(lista_filmes, fg_color="#333333", corner_radius=8)
                 card.pack(fill="x", padx=15, pady=5)
-                ctk.CTkLabel(card, text=f"ID {filme[0]} | {filme[1].upper()}", font=("Helvetica", 14, "bold"),
-                             text_color="#FFFFFF").pack(anchor="w", padx=15, pady=(8, 0))
-                ctk.CTkLabel(card, text=f"{filme[2]} • {filme[3]} minutos", font=("Helvetica", 12),
-                             text_color="#A0A0A0").pack(anchor="w", padx=15, pady=(0, 8))
+
+                info_card = ctk.CTkFrame(card, fg_color="transparent")
+                info_card.pack(fill="x", padx=10, pady=8)
+
+                ctk.CTkLabel(info_card, text=f"ID {id_filme} | {titulo.upper()}", font=("Helvetica", 14, "bold"),
+                             text_color="#FFFFFF").pack(side="left")
+
+                # Botão de excluir
+                btn_del = ctk.CTkButton(info_card, text="🗑️", width=35, height=30, fg_color="#5C1010",
+                                        hover_color="#3D0B0B", command=lambda id_f=id_filme: excluir_filme(id_f))
+                btn_del.pack(side="right")
+
+                ctk.CTkLabel(card, text=f"{genero} • {duracao} minutos", font=("Helvetica", 12),
+                             text_color="#A0A0A0").pack(anchor="w", padx=20, pady=(0, 8))
         except Exception as e:
             print("Aviso na lista de filmes:", e)
 

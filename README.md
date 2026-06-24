@@ -23,7 +23,9 @@ O projeto foi estruturado seguindo boas práticas de Engenharia de Software, div
 
 * **`modulo1.py` (Módulo de Catálogo):** Responsável estritamente por manipular entidades estáticas: cadastros de **Filmes** e **Salas**.
 * **`modulo2.py` (Módulo de Programação):** Lida com as restrições de tempo e espaço, coordenando o agendamento de **Sessões**.
-* **`modulo3.py` (Módulo de Vendas):** Isola a lógica transacional, cuidando puramente do registro de tickets e ocupação de poltronas no banco de dados.
+* **`modulo3.py` (Módulo de Vendas):** Cadastro interno de clientes para programas de
+**fidelidade** e no gerenciamento de regras de negócio para aplicação de
+**descontos**.
 * **`main.py` (Módulo Integrador):** Atua como o orquestrador principal, inicializando o sistema e permitindo a navegação entre as interfaces gráficas sem misturar regras de negócio.
 
 ---

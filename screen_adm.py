@@ -2,7 +2,7 @@ import customtkinter as ctk
 import sqlite3
 import modulo1
 import modulo2
-
+import modulo3
 
 def abrir_dashboard():
     ctk.set_appearance_mode("dark")
@@ -34,10 +34,12 @@ def abrir_dashboard():
         frame_filmes.pack_forget()
         frame_salas.pack_forget()
         frame_sessoes.pack_forget()
+        frame_clientes.pack_forget()  # Esconde a tela de clientes
 
         btn_filmes.configure(fg_color="transparent", text_color="#A0A0A0")
         btn_salas.configure(fg_color="transparent", text_color="#A0A0A0")
         btn_sessoes.configure(fg_color="transparent", text_color="#A0A0A0")
+        btn_clientes.configure(fg_color="transparent", text_color="#A0A0A0")  # Reseta o botão clientes
 
         if aba_nome == "filmes":
             frame_filmes.pack(fill="both", expand=True)
@@ -52,6 +54,10 @@ def abrir_dashboard():
             btn_sessoes.configure(fg_color="#810000", text_color="#FFFFFF")
             carregar_dados_reais_nas_sessoes()
             atualizar_lista_sessoes()
+        elif aba_nome == "clientes":
+            frame_clientes.pack(fill="both", expand=True)
+            btn_clientes.configure(fg_color="#810000", text_color="#FFFFFF")
+            atualizar_lista_clientes()
 
     # MENU LATERAL (SIDEBAR)
     sidebar = ctk.CTkFrame(app, width=250, fg_color="#121212", corner_radius=0)
@@ -82,9 +88,7 @@ def abrir_dashboard():
     conteudo_frame = ctk.CTkFrame(app, fg_color="transparent")
     conteudo_frame.pack(side="right", fill="both", expand=True, padx=20, pady=20)
 
-    # ==========================================
     # TELA 1: FILMES
-    # ==========================================
     frame_filmes = ctk.CTkFrame(conteudo_frame, fg_color="transparent")
 
     form_filmes = ctk.CTkFrame(frame_filmes, width=350, fg_color="#242424", corner_radius=15)
@@ -148,8 +152,23 @@ def abrir_dashboard():
     ctk.CTkLabel(lista_filmes, text="Catálogo de Filmes", font=("Helvetica", 20, "bold"), text_color="#FFFFFF").pack(
         anchor="w", padx=15, pady=(10, 15))
 
+    def excluir_filme(id_filme):
+        try:
+            conexao = sqlite3.connect('banco.db')
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM movies WHERE id = ?", (id_filme,))
+            conexao.commit()
+            conexao.close()
+            atualizar_lista_filmes()  # Recarrega a tela
+            try:
+                carregar_dados_reais_nas_sessoes()  # Atualiza o dropdown
+            except:
+                pass
+        except Exception as e:
+            print("Erro ao excluir filme:", e)
+
     def atualizar_lista_filmes():
-        # Limpa os itens antigos (ignorando o título)
+        # Limpa a tela antes de recarregar
         for widget in lista_filmes.winfo_children():
             if isinstance(widget, ctk.CTkFrame):
                 widget.destroy()
@@ -161,6 +180,11 @@ def abrir_dashboard():
             conexao.close()
 
             for filme in filmes:
+                id_filme = filme[0]
+                titulo = filme[1]
+                genero = filme[2]
+                duracao = filme[3]
+
                 card = ctk.CTkFrame(lista_filmes, fg_color="#333333", corner_radius=8)
                 card.pack(fill="x", padx=15, pady=5)
 
@@ -180,9 +204,7 @@ def abrir_dashboard():
         except Exception as e:
             print("Aviso na lista de filmes:", e)
 
-    # ==========================================
     # TELA 2: SALAS
-    # ==========================================
     frame_salas = ctk.CTkFrame(conteudo_frame, fg_color="transparent")
 
     form_salas = ctk.CTkFrame(frame_salas, width=350, fg_color="#242424", corner_radius=15)
@@ -247,6 +269,21 @@ def abrir_dashboard():
         except Exception as e:
             print("Erro ao excluir sala:", e)
 
+    def excluir_sala(num_sala):
+        try:
+            conexao = sqlite3.connect('banco.db')
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM screens WHERE screen_number = ?", (num_sala,))
+            conexao.commit()
+            conexao.close()
+            atualizar_lista_salas()
+            try:
+                carregar_dados_reais_nas_sessoes()
+            except:
+                pass
+        except Exception as e:
+            print("Erro ao excluir sala:", e)
+
     def atualizar_lista_salas():
         for widget in lista_salas.winfo_children():
             if isinstance(widget, ctk.CTkFrame):
@@ -259,6 +296,10 @@ def abrir_dashboard():
             conexao.close()
 
             for sala in salas:
+                num_sala = sala[0]
+                tipo = sala[1]
+                capacidade = sala[2]
+
                 card = ctk.CTkFrame(lista_salas, fg_color="#333333", corner_radius=8)
                 card.pack(fill="x", padx=15, pady=5)
 
@@ -278,9 +319,7 @@ def abrir_dashboard():
         except Exception as e:
             print("Aviso na lista de salas:", e)
 
-    # ==========================================
     # TELA 3: SESSÕES
-    # ==========================================
     frame_sessoes = ctk.CTkFrame(conteudo_frame, fg_color="transparent")
 
     form_sessoes = ctk.CTkFrame(frame_sessoes, width=350, fg_color="#242424", corner_radius=15)
@@ -361,6 +400,17 @@ def abrir_dashboard():
     ctk.CTkLabel(lista_sessoes, text="Grade Horária de Sessões", font=("Helvetica", 20, "bold"),
                  text_color="#FFFFFF").pack(anchor="w", padx=15, pady=(10, 15))
 
+    def excluir_sessao(id_sessao):
+        try:
+            conexao = sqlite3.connect('banco.db')
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM sessions WHERE id_session = ?", (id_sessao,))
+            conexao.commit()
+            conexao.close()
+            atualizar_lista_sessoes()
+        except Exception as e:
+            print("Erro ao excluir sessão:", e)
+
     def atualizar_lista_sessoes():
         for widget in lista_sessoes.winfo_children():
             if isinstance(widget, ctk.CTkFrame):
@@ -368,8 +418,9 @@ def abrir_dashboard():
         try:
             conexao = sqlite3.connect('banco.db')
             cursor = conexao.cursor()
+            # O ID da sessão é puxado aqui no SELECT para o botão saber quem deletar
             cursor.execute("""
-                SELECT s.session_time, s.screen_number, m.title, s.base_price 
+                SELECT s.id_session, s.session_time, s.screen_number, m.title, s.base_price 
                 FROM sessions s
                 JOIN movies m ON s.movie_id = m.id
                 ORDER BY s.session_time
@@ -387,32 +438,19 @@ def abrir_dashboard():
                 card = ctk.CTkFrame(lista_sessoes, fg_color="#333333", corner_radius=8)
                 card.pack(fill="x", padx=15, pady=5)
 
-                # Criamos um container interno para deixar o texto na esquerda e o botão na direita
+                # Container para alinhar texto na esquerda e botão na direita
                 info_card = ctk.CTkFrame(card, fg_color="transparent")
                 info_card.pack(fill="x", padx=10, pady=8)
 
                 texto = f"{horario} | Sala {sala} - {titulo.upper()}"
-                ctk.CTkLabel(info_card, text=texto, font=("Helvetica", 14, "bold"), text_color="#FFFFFF").pack(
-                    side="left")
+                ctk.CTkLabel(info_card, text=texto, font=("Helvetica", 14, "bold"), text_color="#FFFFFF").pack(side="left")
 
-                # Botão de excluir com o ícone de lixeira e a cor vermelha de alerta
+                # Botão do lixinho
                 btn_del = ctk.CTkButton(info_card, text="🗑️", width=35, height=30, fg_color="#5C1010",
                                         hover_color="#3D0B0B", command=lambda id_s=id_sessao: excluir_sessao(id_s))
                 btn_del.pack(side="right")
 
-                ctk.CTkLabel(card, text=f"Preço Base: R$ {preco:.2f}", font=("Helvetica", 12),
-                             text_color="#869B7E").pack(anchor="w", padx=20, pady=(0, 8))
-        except Exception as e:
-            print("Aviso na lista de sessões:", e)
-
-            for sessao in sessoes:
-                card = ctk.CTkFrame(lista_sessoes, fg_color="#333333", corner_radius=8)
-                card.pack(fill="x", padx=15, pady=5)
-                ctk.CTkLabel(card, text=f"{sessao[0]} | Sala {sessao[1]} - {sessao[2].upper()}",
-                             font=("Helvetica", 14, "bold"), text_color="#FFFFFF").pack(anchor="w", padx=15,
-                                                                                        pady=(8, 0))
-                ctk.CTkLabel(card, text=f"Preço Base: R$ {sessao[3]:.2f}", font=("Helvetica", 12),
-                             text_color="#869B7E").pack(anchor="w", padx=15, pady=(0, 8))
+                ctk.CTkLabel(card, text=f"Preço Base: R$ {preco:.2f}", font=("Helvetica", 12), text_color="#869B7E").pack(anchor="w", padx=20, pady=(0, 8))
         except Exception as e:
             print("Aviso na lista de sessões:", e)
 # ==========================================

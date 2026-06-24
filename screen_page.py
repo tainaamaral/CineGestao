@@ -10,13 +10,16 @@ id_sessao_atual = None
 assentos_selecionados = []
 
 
-#envio de email via resend 
-
-def enviar_ticket_por_email(destinatario, texto_filme, texto_sessao, tipo_ingresso, texto_assentos, texto_total):
+# envio de email via resend
+def enviar_ticket_por_email(destinatario, texto_filme, texto_sessao, tipo_ingresso, texto_assentos, texto_total,
+                            nome_cliente=""):
     resend.api_key = os.getenv("RESEND_API_KEY")
 
     if not resend.api_key:
         raise ValueError("RESEND_API_KEY não encontrada no arquivo .env")
+
+    # Adiciona o nome do cliente no bilhete caso tenha fidelidade
+    linha_cliente = f"<p style='color:#1B1717;'><b>CLIENTE FIDELIDADE:</b> {nome_cliente.upper()}</p>" if nome_cliente else ""
 
     corpo_html = f"""
     <html>
@@ -31,6 +34,7 @@ def enviar_ticket_por_email(destinatario, texto_filme, texto_sessao, tipo_ingres
         <p style="color:#000; font-size:15px;"><b>FILME:</b> {texto_filme.upper()}</p>
         <p style="color:#1B1717;"><b>SESSÃO:</b> {texto_sessao}</p>
         <p style="color:#1B1717;"><b>TIPO:</b> {tipo_ingresso.upper()}</p>
+        {linha_cliente}
         <p style="color:#810000; font-size:15px;"><b>ASSENTO(S):</b> Poltrona(s) {texto_assentos}</p>
 
         <p style="text-align:center; color:#7F7F7F;">───────────────────────────</p>
@@ -55,9 +59,8 @@ def enviar_ticket_por_email(destinatario, texto_filme, texto_sessao, tipo_ingres
     })
 
 
-# ──────────────────────────────────────────────
+
 # TELA PRINCIPAL
-# ──────────────────────────────────────────────
 def abrir_atendimento():
     ctk.set_appearance_mode("dark")
 
@@ -66,7 +69,9 @@ def abrir_atendimento():
     app.title("CineGestão - Frente de Caixa")
     app.configure(fg_color="#1A1A1A")
 
-    # BASE DE DADOS
+    # Variável para controlar o desconto na venda atual
+    estado_venda = {"fidelidade_ativa": False, "nome_cliente": ""}
+
     def garantir_tabela_ingressos():
         try:
             conexao = sqlite3.connect('banco.db')
@@ -101,6 +106,7 @@ def abrir_atendimento():
     titulo_topo.pack(pady=15, expand=True)
 
 
+    # PAINEL ESQUERDO
     left_panel = ctk.CTkFrame(app, width=350, fg_color="#242424", corner_radius=0)
     left_panel.pack(side="left", fill="y")
     left_panel.pack_propagate(False)
@@ -220,16 +226,9 @@ def abrir_atendimento():
                     cor_hover = "#CFCAC0"
                     cor_texto = "#1B1717"
 
-                btn_poltrona = ctk.CTkButton(matriz_frame,
-                                             text=nome_assento,
-                                             width=42,
-                                             height=42,
-                                             corner_radius=8,
-                                             fg_color=cor_fundo,
-                                             hover_color=cor_hover,
-                                             text_color=cor_texto,
+                btn_poltrona = ctk.CTkButton(matriz_frame, text=nome_assento, width=42, height=42, corner_radius=8,
+                                             fg_color=cor_fundo, hover_color=cor_hover, text_color=cor_texto,
                                              font=("Helvetica", 11, "bold"))
-
                 btn_poltrona.configure(command=lambda f=fileira, a=assento, b=btn_poltrona: clicar_poltrona(f, a, b))
                 btn_poltrona.grid(row=fileira, column=assento + 1, padx=5, pady=5)
 
@@ -262,15 +261,18 @@ def abrir_atendimento():
                 if "Meia-Entrada" in ingresso:
                     preco_base /= 2
 
+                # Desconta R$ 5 por ingresso caso a fidelidade esteja ativada
+                if estado_venda["fidelidade_ativa"]:
+                    preco_base -= 5.00
+                    if preco_base < 0:
+                        preco_base = 0  # Evita que o ingresso fique com valor negativo
+
                 total = preco_base * len(assentos_selecionados)
                 label_total.configure(text=f"Total a Pagar: R$ {total:.2f}", text_color="#FFFFFF")
         except Exception:
             label_total.configure(text="Total a Pagar: R$ 0,00", text_color="#FFFFFF")
 
-
-    # ──────────────────────────────────────────────
     # WIDGETS DO PAINEL ESQUERDO
-    # ──────────────────────────────────────────────
     combo_filme = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
                                   dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
                                   values=["Selecione o Filme"], command=atualizar_combo_sessoes)
@@ -375,7 +377,7 @@ def abrir_atendimento():
 
     def abrir_modal_bilhete(assentos_emitidos):
         modal = ctk.CTkToplevel(app)
-        modal.geometry("460x660")  
+        modal.geometry("460x660")
         modal.title("Emissão de Bilhete")
         modal.configure(fg_color="#222222")
         modal.resizable(False, False)
@@ -385,15 +387,12 @@ def abrir_atendimento():
         modal.focus_force()
         modal.grab_set()
 
-        app.janela_modal_ativa = modal
-
         texto_filme = combo_filme.get()
         texto_sessao = combo_sessao.get()
         assentos_ordenados = sorted(assentos_emitidos, key=int)
         texto_assentos = ", ".join(assentos_ordenados)
         texto_total = label_total.cget("text").replace("Total a Pagar: ", "")
 
-        # CARTÃO DO INGRESSO
         cartao_ingresso = ctk.CTkFrame(modal, fg_color="#FFFDF0", corner_radius=12, border_width=2,
                                        border_color="#D5D1C3")
         cartao_ingresso.pack(pady=20, padx=25, fill="both", expand=True)
@@ -410,10 +409,16 @@ def abrir_atendimento():
                      text_color="#333333").pack(anchor="w", pady=4)
         ctk.CTkLabel(corpo_info, text=f"FILME:   {texto_filme.upper()}", font=("Courier New", 14, "bold"),
                      text_color="#000000").pack(anchor="w", pady=6)
-        ctk.CTkLabel(corpo_info, text=f"SESSÃO:  {texto_sessao}", font=("Courier New", 13),
-                     text_color="#1B1717").pack(anchor="w", pady=4)
+        ctk.CTkLabel(corpo_info, text=f"SESSÃO:  {texto_sessao}", font=("Courier New", 13), text_color="#1B1717").pack(
+            anchor="w", pady=4)
         ctk.CTkLabel(corpo_info, text=f"TIPO:    {combo_ingresso.get().upper()}", font=("Courier New", 13),
                      text_color="#1B1717").pack(anchor="w", pady=4)
+
+        # Mostra o nome do cliente no bilhete físico se houver fidelidade
+        if estado_venda["fidelidade_ativa"]:
+            ctk.CTkLabel(corpo_info, text=f"CLIENTE: {estado_venda['nome_cliente'].upper()}",
+                         font=("Courier New", 13, "bold"), text_color="#4CAF50").pack(anchor="w", pady=4)
+
         ctk.CTkLabel(corpo_info, text=f"ASSENTO: Poltrona(s) {texto_assentos}", font=("Courier New", 13, "bold"),
                      text_color="#810000").pack(anchor="w", pady=6)
 
@@ -426,19 +431,12 @@ def abrir_atendimento():
         ctk.CTkLabel(cartao_ingresso, text="MUITO OBRIGADO - BOM FILME!", font=("Courier New", 11, "italic"),
                      text_color="#555555").pack(pady=(0, 15))
 
-        # ── CAMPO DE EMAIL ──
         frame_email = ctk.CTkFrame(modal, fg_color="transparent")
         frame_email.pack(pady=(0, 8), padx=25, fill="x")
 
-        entry_email = ctk.CTkEntry(
-            frame_email,
-            placeholder_text="Email do cliente (opcional)",
-            width=270, height=38,
-            font=("Helvetica", 13),
-            fg_color="#2E2E2E",
-            text_color="#FFFFFF",
-            border_color="#555555"
-        )
+        entry_email = ctk.CTkEntry(frame_email, placeholder_text="Email do cliente (opcional)", width=270, height=38,
+                                   font=("Helvetica", 13), fg_color="#2E2E2E", text_color="#FFFFFF",
+                                   border_color="#555555")
         entry_email.pack(side="left", padx=(0, 8))
 
         label_status_email = ctk.CTkLabel(modal, text="", font=("Helvetica", 12), text_color="#AAAAAA")
@@ -462,7 +460,8 @@ def abrir_atendimento():
                     texto_sessao,
                     combo_ingresso.get(),
                     texto_assentos,
-                    texto_total
+                    texto_total,
+                    estado_venda["nome_cliente"]
                 )
                 btn_email.configure(text="✅ Enviado!", fg_color="#2E5C2E", state="disabled")
                 label_status_email.configure(text=f"Comprovante enviado para {email_digitado}", text_color="#55CC55")
@@ -471,83 +470,23 @@ def abrir_atendimento():
                 label_status_email.configure(text=f"Erro ao enviar: {e}", text_color="#FF5555")
                 print(f"Erro SMTP: {e}")
 
-        btn_email = ctk.CTkButton(
-            frame_email,
-            text="📧 Enviar",
-            width=100, height=38,
-            fg_color="#1A3A5C",
-            hover_color="#122840",
-            font=("Helvetica", 13, "bold"),
-            command=acao_enviar_email
-        )
+        btn_email = ctk.CTkButton(frame_email, text="📧 Enviar", width=100, height=38, fg_color="#1A3A5C",
+                                  hover_color="#122840", font=("Helvetica", 13, "bold"), command=acao_enviar_email)
         btn_email.pack(side="left")
 
-  
         def acao_fechar_modal():
+            # Limpa o estado da fidelidade para a próxima venda
+            estado_venda["fidelidade_ativa"] = False
+            estado_venda["nome_cliente"] = ""
+            entry_fidelidade.delete(0, 'end')
+            label_status_fidelidade.configure(text="")
+
             modal.destroy()
             alternar_sessao_e_construir_mapa()
 
         btn_fechar = ctk.CTkButton(modal, text="Concluir Impressão", width=200, height=45, fg_color="#5C1010",
                                    hover_color="#3D0B0B", font=("Helvetica", 14, "bold"), command=acao_fechar_modal)
         btn_fechar.pack(pady=(8, 18))
-
-  
-    combo_filme = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
-                                  dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
-                                  values=["Selecione o Filme"], command=atualizar_combo_sessoes)
-    combo_filme.pack(pady=(0, 20))
-
-    combo_sessao = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
-                                   dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
-                                   values=["Selecione a Sessão"], command=alternar_sessao_e_construir_mapa)
-    combo_sessao.pack(pady=(0, 20))
-
-    combo_ingresso = ctk.CTkComboBox(left_panel, width=300, height=45, fg_color="#D5D1C3", text_color="#000000",
-                                     dropdown_fg_color="#D5D1C3", dropdown_text_color="#000000", font=("Helvetica", 14),
-                                     values=["Inteira", "Meia-Entrada (Estudante)"], command=atualizar_resumo_venda)
-    combo_ingresso.pack(pady=(0, 40))
-
-    label_assento = ctk.CTkLabel(left_panel, text="Assento Selecionado: --", font=("Helvetica", 16),
-                                 text_color="#FFFFFF")
-    label_assento.pack(anchor="w", padx=25, pady=5)
-
-    label_total = ctk.CTkLabel(left_panel, text="Total a Pagar: R$ 0,00", font=("Helvetica", 20, "bold"),
-                               text_color="#FFFFFF")
-    label_total.pack(anchor="w", padx=25, pady=(5, 40))
-
-    # PAINEL DIREITO
-    right_panel = ctk.CTkFrame(app, fg_color="transparent")
-    right_panel.pack(side="right", fill="both", expand=True)
-
-    tela_cinema = ctk.CTkLabel(right_panel, text="TELA", font=("Helvetica", 16, "bold"), fg_color="#D5D1C3",
-                               text_color="#000000", width=600, height=30, corner_radius=10)
-    tela_cinema.pack(pady=(40, 20))
-
-    matriz_frame = ctk.CTkFrame(right_panel, fg_color="transparent")
-    matriz_frame.pack(anchor="n", pady=(10, 0))
-
-    def clicar_poltrona(fileira, assento, botao):
-        num_poltrona = (fileira * 8) + assento + 1
-        nome_assento = str(num_poltrona)
-
-        if botao.cget("fg_color") == "#810000":
-            return
-
-        if botao.cget("fg_color") == "#869B7E":
-            botao.configure(fg_color="#EEEBDD", text_color="#1B1717", hover_color="#1B1717")
-            if nome_assento in assentos_selecionados:
-                assentos_selecionados.remove(nome_assento)
-        else:
-            botao.configure(fg_color="#869B7E", text_color="#1B1717", hover_color="#6B7C64")
-            assentos_selecionados.append(nome_assento)
-
-        if assentos_selecionados:
-            assentos_ordenados = sorted(assentos_selecionados, key=int)
-            label_assento.configure(text=f"Poltronas: {', '.join(assentos_ordenados)}")
-        else:
-            label_assento.configure(text="Assento Selecionado: --")
-
-        atualizar_resumo_venda()
 
     def finalizar_venda_db():
         if not assentos_selecionados:

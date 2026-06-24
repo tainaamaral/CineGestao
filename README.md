@@ -63,14 +63,23 @@ Rode o arquivo integrador principal. O banco de dados (banco.db) será criado e 
 ## 📸 Telas do Sistema
 
 
-Menu Principal: <img width="1249" height="756" alt="Screenshot 2026-06-23 at 21 08 13" src="https://github.com/user-attachments/assets/d72a5a16-07c6-4246-87e6-777bacb7adc1" />
+Menu Principal:
+
+<img width="496" height="430" alt="Screenshot 2026-06-24 at 00 00 49" src="https://github.com/user-attachments/assets/304fdefc-240a-4ce3-83c2-6d2953e26273" />
+
                    
                    
-Painel Administrativo: <img width="1249" height="756" alt="Screenshot 2026-06-23 at 21 08 13" src="https://github.com/user-attachments/assets/65b8be68-f1eb-463a-adf2-dd679c25fe63" />
+Painel Administrativo: 
+
+<img width="1249" height="756" alt="Screenshot 2026-06-23 at 21 08 13" src="https://github.com/user-attachments/assets/65b8be68-f1eb-463a-adf2-dd679c25fe63" />
 
 
-Frente de Caixa (Mapa de Assentos): <img width="1246" height="748" alt="Screenshot 2026-06-23 at 21 08 42" src="https://github.com/user-attachments/assets/1e92980a-696c-48be-996d-41b9ee2f4199" />
+Frente de Caixa (Mapa de Assentos): 
+
+<img width="1246" height="748" alt="Screenshot 2026-06-23 at 21 08 42" src="https://github.com/user-attachments/assets/1e92980a-696c-48be-996d-41b9ee2f4199" />
+
 Bilhete Emitido: 
+
 
 
 <img width="453" height="690" alt="Screenshot 2026-06-23 at 21 09 07" src="https://github.com/user-attachments/assets/709581fe-e9d8-4b4e-b1d2-f3b89c3ba434" />

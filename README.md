@@ -54,6 +54,10 @@ O projeto utiliza a biblioteca CustomTkinter para a interface moderna. Instale-a
    ```
    pip install customtkinter
    ```
+O projeto utiliza uma biblioteca para imprimir o bilhete no e-mail. Instale-a via pip:
+   ```
+   pip install resend python-dotenv
+   ```
 
 4. Inicie o sistema:
 Rode o arquivo integrador principal. O banco de dados (banco.db) será criado e configurado automaticamente na primeira execução.

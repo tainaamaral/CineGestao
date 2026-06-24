@@ -70,8 +70,9 @@ Painel Administrativo: <img width="1249" height="756" alt="Screenshot 2026-06-23
 
 
 Frente de Caixa (Mapa de Assentos): <img width="1246" height="748" alt="Screenshot 2026-06-23 at 21 08 42" src="https://github.com/user-attachments/assets/1e92980a-696c-48be-996d-41b9ee2f4199" />
-
 Bilhete Emitido: 
+
+
 <img width="453" height="690" alt="Screenshot 2026-06-23 at 21 09 07" src="https://github.com/user-attachments/assets/709581fe-e9d8-4b4e-b1d2-f3b89c3ba434" />
 
 ## ✒️ Desenvolvido por Tainá, Lívia e Natália.

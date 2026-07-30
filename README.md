@@ -35,7 +35,7 @@ O projeto foi estruturado seguindo boas práticas de Engenharia de Software, div
 * **Linguagem:** Python 3
 * **Interface Gráfica (GUI):** CustomTkinter (biblioteca moderna baseada em Tkinter)
 * **Banco de Dados:** SQLite3 (banco relacional embutido para persistência de dados e garantia de integridade com *Foreign Keys*)
-
+* **API Resend:** API do Resend para disparos de e-mail automático
 ---
 
 ## 🛠️ Como Executar o Projeto
